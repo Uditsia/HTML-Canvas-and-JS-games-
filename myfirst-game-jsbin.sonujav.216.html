@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<!--
+Created using JS Bin
+http://jsbin.com
+
+Copyright (c) 2018 by Uditsia (http://jsbin.com/sonujav/216/edit)
+
+Released under the MIT license: http://jsbin.mit-license.org
+-->
+<meta name="robots" content="noindex">
+<html>
+<head>
+<meta name="description" content="My First Game ;)">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Game of Life(Box life!)</title>
+<style id="jsbin-css">
+body
+{
+  font-family: arial;
+  overflow:hidden;
+}
+canvas
+{
+  border: 2px solid lightblue;
+  width:50%;
+  height: 50%;
+  margin-left: 20%;
+  display: block;
+}
+#mycanvas
+{
+  display: block;
+}
+#myCanvas1
+{
+  display: none;
+}
+.controls
+{
+  padding:15px;
+  background-color: lightgreen;
+  color: white;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor:pointer;
+  border: 0;
+}
+#s2
+{
+  float: right;
+  max-width:188px;
+  font-size:12px;
+}
+#s1
+{
+  float:left;
+  clear: bottom;
+}
+.upline
+{
+  margin: 30px 200px 20px 50px;
+  max-width:80px;
+  text-align: center;
+  display:block;
+ 
+}
+.oneline
+{
+  display: inline;
+  margin-right:50px;
+  text-align: center;
+}
+.controls:hover
+{
+  background-color:green;
+}
+.controls:active
+{
+  box-shadow: 1px 1px 4px yellow;
+}
+</style>
+</head>
+<body onload="init();">
+  <canvas id="myCanvas1" style=>Your browser does not support canvas eliment </canvas>
+  <canvas id="myCanvas" >Your browser does not support canvas eliment </canvas>
+  <section id="s1">
+    <h1>Controls</h1>
+    <!-- On screen buttons -->
+    <button type="button" class="controls upline" id="up" onmousedown="up();" onmouseup="stopY();" onmouseout="stopY();">UP</button>
+    <button type="button" class="controls oneline" id="left" onmousedown="left();" onmouseup="stopX();" mouseout="stopX();">LEFT</button>
+    <button type="button" class="controls oneline" id="right" onmousedown="right();" onmouseup="stopX();" onmouseout="stopX();">RIGHT</button>
+    <button type="button" class="controls upline" id="down" onmousedown="down();" onmouseup="stopY();" onmouseout="stopY();">DOWN</button>
+    
+    <br>
+    <button type="button" class="controls oneline" onclick="replay();">ENTER</button>
+    <button type="button" class="controls oneline">SPACE</button>
+  </section>
+  <!-- Instuctions -->
+  <section id="s2">
+    <h3>How to play</h3>
+    <p>It is a simple game of life (because creator is too lazy for complex ;)</p>
+    <p>The grey block is poor Udit. The whole box represents life from 2017 to 2018.</p>
+    <p>You have a choice to go back and live in past (2017) or be brave.</p>
+    <p>Your task is to avoid <span style="background-color: red;">&nbsp;&nbsp;&nbsp;</span>
+        or challenges of life(and yeah, because Udit is too lazy for that) and survive till 2018.
+    </p>
+    <p>You can use keybord arrow keys or onscreen bottons for controls.</p>
+    <p><em>Press ENTER if get stuck </p>
+    <p>-<a href="https://www.linkedin.com/in/udit-narayan-sia-0baa9020/" target="blank">Udit</a></p>
+  </section>
+  
+<script id="jsbin-javascript">
+var canvas, ctx;
+var x=20, y=20;
+var increaseX= 0, increaseY= 0;
+var canvasWidth;
+var flag=1;
+function init()
+{
+  canvas = document.querySelector("#myCanvas");
+  ctx = canvas.getContext('2d');
+  //Key-press listeners
+  window.addEventListener('keydown',handelKeyDown, false);
+  window.addEventListener('keyup', handleKeyup, false);
+  document.querySelector("#up").addEventListener('touchstart', up, false);
+  document.querySelector("#down").addEventListener('touchstart', down, false);
+  document.querySelector("#left").addEventListener('touchstart', left, false);
+  document.querySelector("#right").addEventListener('touchstart', right, false);
+  
+  requestId = requestAnimationFrame(animationLoop);
+  
+  canvasWidth = document.getElementById("myCanvas").clientWidth;
+}
+
+function up()
+{
+  increaseY=-1;
+}
+function stopY()
+{
+  increaseY=0;
+}
+
+function left()
+{
+  increaseX=-1;
+}
+function stopX()
+{
+  increaseX=0;
+}
+
+function right()
+{
+  increaseX= 1;
+}
+
+function down()
+{
+  increaseY= 1;
+}
+
+
+
+function handelKeyDown(evt)
+{
+  if(evt.keyCode == 37)
+    {
+      increaseX = -1;
+    }else if (evt.keyCode == 39)
+      {
+        increaseX = 1;
+      }else if (evt.keyCode == 38)
+        {
+          increaseY = -1;
+        }else if(evt.keyCode == 40)
+          {
+            increaseY = 1;
+          }else if(evt.keyCode == 13)
+            {
+              replay();
+            }
+  
+  console.log("keydown");
+}
+function handleKeyup(evt)
+{
+  increaseX= 0;
+  increaseY = 0;
+  console.log("keyup")
+}
+
+function animationLoop()
+{
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  
+  drawBlock(x,y);
+  
+  x += increaseX;
+  y += increaseY;
+  
+//CHECKS IMPORTANT!!  
+  winCheck(x);
+  collision(x,y);
+  cheatCheck(x,y);
+  
+  
+  
+  requestId = requestAnimationFrame(animationLoop);
+}
+//obstacles draw
+function drawBlock(bX,bY)
+{
+  ctx.save();
+  ctx.fillStyle=("rgba(255,0,0,5)");
+  ctx.fillRect(50,0,20,80);
+  ctx.fillRect(50,105,20,44);
+  
+  ctx.fillRect(95,0,20,10);
+  ctx.fillRect(95,34,20,204);
+  
+  ctx.fillRect(140,0,20,70);
+  ctx.fillRect(140,92,20,60);
+  
+  ctx.fillRect(185,0,20,122);
+  ctx.fillRect(185,145,20,10);
+  
+  
+  ctx.fillStyle="lightgreen";
+  ctx.fillRect(0,0,15,150);
+  ctx.fillStyle="white";
+  ctx.rotate(1.6);
+  //change text here
+  ctx.fillText("2017",50,-3);
+  ctx.restore();
+  
+  ctx.save();
+  ctx.fillStyle="lightgreen";
+  ctx.fillRect(285,0,15,150);
+  ctx.font ="12px helvetica";
+  ctx.fillStyle="white";
+  ctx.rotate(1.6);
+  //change text here
+  ctx.fillText("2018",50,-290);
+  ctx.restore();
+  
+  
+  ctx.save();
+  ctx.translate(bX,bY)
+  ctx.fillStyle="grey";
+  ctx.fillRect(0,0,20,20);
+  ctx.restore();
+}
+
+
+
+function winCheck(x)
+{
+  if(x == canvasWidth-10)
+    {
+      console.log("happy new year");
+    }
+}
+//collision detection
+function collision(x,y)
+{
+  if(x==32 && y<79)
+    {
+      gameOver();
+      console.log("game over obstacle: 1 :up");
+    }else if(x==32 && y>87){
+        gameOver();
+        console.log("game over obstacle: 1 :down");
+      }else if(x==77 && y<9){
+        gameOver();
+      console.log("game over obstacle: 2 :up");
+      }else if(x==77 && y>16){
+         gameOver();
+      console.log("game over obstacle: 2 :down");
+      }else if(x==122 && y<69){
+        gameOver();
+      console.log("game over obstacle: 3 :up");
+      }else if(x==122 && y>74){
+        gameOver();
+      console.log("game over obstacle: 3 :down");
+      }else if(x==167 && y<121){
+        gameOver();
+      console.log("game over obstacle: 4 :up");
+      }else if(x==167 && y>127){
+        gameOver();
+      console.log("game over obstacle: 4 :up");
+      }else if(x<11){
+        coward();
+      }else if(x>270){
+        happyNewYear();
+      }
+}
+//game over show
+var canvas1, ctx1;
+function gameOver()
+{
+  
+  var window = document.querySelector("#myCanvas");
+      window.style.display="none";
+      var window1 = document.querySelector("#myCanvas1");
+      window1.style.display="block";
+    canvas1 = document.querySelector("#myCanvas1");
+  ctx1 = canvas1.getContext('2d');
+  ctx1.save();
+    ctx1.clearRect(0,0,canvas1.width,canvas1.height);
+    ctx1.font = "2em helvetica";  
+    ctx1.fillStyle="red";
+    ctx1.fillText("Game Over",70,70);
+  
+  ctx1.font = "1em helvetica";  
+    ctx1.fillStyle="red";
+    ctx1.fillText("Click on Enter To try again",55,90);
+  ctx1.restore();
+}
+
+function replay()
+{
+  var window = document.querySelector("#myCanvas");
+      window.style.display="block";
+      var window1 = document.querySelector("#myCanvas1");
+      window1.style.display="none";
+    return x=20, y=20;
+}
+
+
+function coward()
+{
+  var window = document.querySelector("#myCanvas");
+      window.style.display="none";
+      var window1 = document.querySelector("#myCanvas1");
+      window1.style.display="block";
+    canvas1 = document.querySelector("#myCanvas1");
+  ctx1 = canvas1.getContext('2d');
+  ctx1.save();
+  ctx1.clearRect(0,0,canvas1.width,canvas1.height);
+  ctx1.font = "1em helvetica";  
+    ctx1.fillStyle="black";
+    ctx1.fillText("Cowards die ",10,50);
+    ctx1.fillText("many times before their deaths",30,65);
+  ctx1.restore();
+}
+//happyNewYear print
+function happyNewYear()
+{
+  var window = document.querySelector("#myCanvas");
+      window.style.display="none";
+      var window1 = document.querySelector("#myCanvas1");
+      window1.style.display="block";
+    canvas1 = document.querySelector("#myCanvas1");
+  ctx1 = canvas1.getContext('2d');
+  ctx1.save();
+  ctx1.clearRect(0,0,canvas1.width,canvas1.height);
+  ctx1.font = "2em helvetica";  
+    ctx1.fillStyle="grey";
+	//change the text here
+    ctx1.fillText("Happy New Year :D ",10,50);
+    ctx1.fillText("- Udit",50,85);
+  ctx1.restore();
+}
+
+
+
+function cheatCheck(x,y)
+{
+  var q1 = document.querySelector("#myCanvas").clientWidth;
+  var q2 = document.querySelector("#myCanvas").clientHeight;
+  if(y>q2+150){
+    gameOver();
+    console.log("You will lose if you try to cheat");
+  }
+}
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
